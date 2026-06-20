@@ -1,0 +1,78 @@
+{
+  "name": "claude-pulse",
+  "displayName": "ClaudePulse",
+  "description": "Ambient Claude Code quota visibility in the VS Code status bar",
+  "version": "0.1.0",
+  "publisher": "thundereagle",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "claude",
+    "anthropic",
+    "usage",
+    "quota",
+    "status bar"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thundereagle/claude-code-stats"
+  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "claudePulse.showPicker",
+        "title": "ClaudePulse: Show Usage Picker"
+      },
+      {
+        "command": "claudePulse.refresh",
+        "title": "ClaudePulse: Refresh Now"
+      }
+    ],
+    "configuration": {
+      "title": "ClaudePulse",
+      "properties": {
+        "claudePulse.pollIntervalMinutes": {
+          "type": "number",
+          "default": 5,
+          "minimum": 5,
+          "description": "How often to poll Claude usage (minutes). Minimum enforced at 5."
+        },
+        "claudePulse.pinnedMetric": {
+          "type": "string",
+          "enum": [
+            "fiveHour",
+            "sevenDay",
+            "extraUsage"
+          ],
+          "enumDescriptions": [
+            "5-hour rolling window utilization",
+            "7-day rolling window utilization",
+            "Extra usage credit balance"
+          ],
+          "default": "fiveHour",
+          "description": "Which metric to pin in the status bar. Also changeable via the status bar click menu."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/node": "^26.0.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.0.0",
+    "typescript": "^5.4.0"
+  }
+}
