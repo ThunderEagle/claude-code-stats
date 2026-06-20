@@ -1,4 +1,4 @@
-# Claude Code Stats — VS Code Extension
+# ClaudePulse — VS Code Extension
 
 ## Problem Statement
 
@@ -18,80 +18,87 @@ GET https://api.anthropic.com/api/oauth/usage
 Authorization: Bearer <access_token>
 ```
 
-**Response shape:**
+**Response shape (observed):**
 ```json
 {
-  "five_hour":        { "utilization": 0.73, "resets_at": "2026-06-20T18:00:00Z" },
-  "seven_day":        { "utilization": 0.41, "resets_at": "2026-06-27T00:00:00Z" },
-  "seven_day_sonnet": { "utilization": 0.12, "resets_at": "2026-06-27T00:00:00Z" },
+  "five_hour":        { "utilization": 73, "resets_at": "2026-06-20T18:00:00Z" },
+  "seven_day":        { "utilization": 41, "resets_at": "2026-06-27T00:00:00Z" },
+  "seven_day_sonnet": { "utilization": 12, "resets_at": "2026-06-27T00:00:00Z" },
   "extra_usage": {
     "is_enabled": true,
-    "monthly_limit": 100,
-    "used_credits": 7.42,
-    "utilization": 0.074
+    "monthly_limit": 5000,
+    "used_credits": 742,
+    "utilization": 7.4
   }
 }
 ```
 
-**Auth token source:** `~/.claude/.credentials.json` — a plain JSON file on disk, not stored in VS Code SecretStorage. Readable by any extension.
+**Field units (confirmed via live testing):**
+- `five_hour.utilization`, `seven_day.utilization`: integer percentage, `0–100`
+- `extra_usage.monthly_limit`, `extra_usage.used_credits`: integer cents — divide by 100 for display
+- `extra_usage.utilization`: percentage, `0–100`
+- `resets_at`: ISO 8601 UTC
 
-The token is an OAuth Bearer token. On a 401, re-read the credentials file and retry once — Claude Code will have refreshed the token by the time the user is active. Only implement the refresh call (`POST /v1/oauth/token`) if this passive approach proves flaky in practice.
+**Auth token source:** `~/.claude/.credentials.json` — a plain JSON file on disk, not stored in VS Code SecretStorage. Field path: `claudeAiOauth.accessToken`.
+
+The credentials file is re-read fresh on every poll so the token stays current without any explicit refresh logic. Claude Code handles token renewal; we just read whatever is on disk. On a missing file or 401, show degraded state and recover on the next poll.
 
 ## Architecture
 
 ```
 Extension
 ├── credentialsReader.ts   — reads ~/.claude/.credentials.json, extracts accessToken
-├── usageClient.ts         — GET /api/oauth/usage, returns typed UsageData
-├── statusBarItem.ts       — vscode.StatusBarItem, formats the pinned metric
-├── usagePoller.ts         — configurable interval, wires the above together
+├── usageClient.ts         — GET /api/oauth/usage, maps snake_case→camelCase, converts units
+├── statusBarItem.ts       — vscode.StatusBarItem (right-aligned), formats the pinned metric
+├── usagePoller.ts         — configurable interval, reads credentials fresh each poll
+├── format.ts              — formatDuration, formatPct helpers
 └── extension.ts           — activate/deactivate, registers commands
 ```
 
-**On 401:** Re-read credentials file and retry once. If still 401, show degraded state (e.g. `Claude: auth error`).
-
 ## Configuration
 
-VS Code settings (`claudeCodeStats.*`):
+VS Code settings (`claudePulse.*`):
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| `pollIntervalMinutes` | number | 5 | How often to poll. Minimum enforced at 5. |
-| `pinnedMetric` | enum | `fiveHour` | Which metric shows in the status bar. Values: `fiveHour`, `sevenDay`, `extraUsage`. |
+| `claudePulse.pollIntervalMinutes` | number | 5 | How often to poll. Minimum enforced at 5. |
+| `claudePulse.pinnedMetric` | enum | `fiveHour` | Which metric shows in the status bar. Values: `fiveHour`, `sevenDay`, `extraUsage`. |
 
 `pinnedMetric` is also writable from the click popup so it never requires opening settings manually.
 
 ## Status Bar Display
 
-Primary (always visible) — shows the pinned metric:
+Right-aligned. Primary (always visible) — shows the pinned metric:
 ```
 Claude: 73% · resets 1h 22m      ← fiveHour or sevenDay
-Claude: $7.42 / $100.00           ← extraUsage
+Claude: $7.42 / $50.00            ← extraUsage (cents converted to dollars)
 ```
+
+Color coding by utilization: yellow ≥ 50%, red ≥ 80%.
 
 On hover tooltip — always shows the full breakdown regardless of pinned metric:
 ```
 5h window:   73% used — resets in 1h 22m
 7-day:       41% used — resets in 6d 14h
-Extra usage: $7.42 / $100.00
+Extra usage: $7.42 / $50.00
 ```
 
 Click — opens a quick-pick:
 ```
-$(pulse)       5h window    73% · resets 1h 22m      [pin]
-$(calendar)    7-day        41% · resets 6d 14h       [pin]
-$(credit-card) Extra usage  $7.42 / $100.00           [pin]
+$(pulse)       5h window    73% · resets 1h 22m
+$(calendar)    7-day        41% · resets 6d 14h
+$(credit-card) Extra usage  $7.42 / $50.00
 ──────────────────────────────────────────
 $(refresh)     Refresh now
 ```
 
-Selecting a `[pin]` item updates `pinnedMetric` and closes the picker. Selecting "Refresh now" triggers an immediate poll.
+Selecting a metric row pins it and closes the picker. Selecting "Refresh now" triggers an immediate poll.
 
 ## Key Data Types
 
 ```typescript
 interface TimeWindow {
-  utilization: number;   // 0–1
+  utilization: number;   // 0–100 (percentage)
   resetsAt?: string;     // ISO 8601
 }
 
@@ -101,25 +108,20 @@ interface UsageData {
   sevenDaySonnet?: TimeWindow;
   extraUsage?: {
     isEnabled: boolean;
-    monthlyLimit?: number;
-    usedCredits?: number;
-    utilization?: number;
+    monthlyLimit?: number;  // dollars (converted from API cents)
+    usedCredits?: number;   // dollars (converted from API cents)
+    utilization?: number;   // 0–100 (percentage)
   };
 }
 ```
 
 ## Distribution
 
-Publish to the VS Code Marketplace. Setup is one-time:
+Publish via GitHub Actions on version tag push (`v*`). The workflow runs `tsc --noEmit` then `vsce publish`. PAT stored in GitHub Secrets as `VSCE_PAT`.
 
-1. Microsoft account (existing Outlook/GitHub-via-Microsoft account works)
-2. Azure DevOps organization — free tier at `dev.azure.com`
-3. Publisher profile at `marketplace.visualstudio.com/manage`
-4. PAT scoped to `Marketplace (Publish)` from Azure DevOps
-5. `npm install -g @vscode/vsce` → `vsce publish`
-
-Extensions go live within minutes. No review queue, no fee. Verified publisher badge (checkmark) requires a registered domain for DNS verification — skip it, it's cosmetic only.
+Extensions go live within minutes. No review queue, no fee. Verified publisher badge requires domain DNS verification — skip it, cosmetic only.
 
 ## Development Notes
 
-- **anthropic-beta header:** The existing extension sends an internal beta header (`yw` constant in the bundle). Test the endpoint without it first; grab the value from the bundle if a 4xx comes back.
+- **anthropic-beta header:** The existing extension sends an internal beta header. Not required — endpoint responds correctly without it.
+- **`seven_day_sonnet`:** Included in `UsageData` but not offered as a pinnable option; visible in tooltip if present.

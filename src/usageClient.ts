@@ -75,8 +75,8 @@ export function fetchUsage(token: string): Promise<UsageData> {
                             extraUsage: raw.extra_usage
                                 ? {
                                     isEnabled: raw.extra_usage.is_enabled,
-                                    monthlyLimit: raw.extra_usage.monthly_limit,
-                                    usedCredits: raw.extra_usage.used_credits,
+                                    monthlyLimit: raw.extra_usage.monthly_limit !== undefined ? raw.extra_usage.monthly_limit / 100 : undefined,
+                                    usedCredits: raw.extra_usage.used_credits !== undefined ? raw.extra_usage.used_credits / 100 : undefined,
                                     utilization: raw.extra_usage.utilization,
                                 }
                                 : undefined,

@@ -11,5 +11,5 @@ export function formatDuration(isoDate: string): string {
 }
 
 export function formatPct(utilization: number): string {
-    return `${Math.round(utilization * 100)}%`;
+    return `${Math.round(utilization)}%`;
 }

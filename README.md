@@ -9,7 +9,7 @@ Ambient Claude Code quota visibility in the VS Code status bar. No modals, no na
 - **Hover tooltip** with the full breakdown across all windows
 - **Click to switch** which metric is pinned, or trigger an immediate refresh
 
-![ClaudePulse status bar showing 73% used with reset time](docs/screenshot.png)
+![ClaudePulse status bar showing 22% used with reset time](docs/screenshot.png)
 
 ## Requirements
 

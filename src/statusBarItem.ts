@@ -8,7 +8,7 @@ export class ClaudePulseStatusBar implements vscode.Disposable {
     private _lastPinned: string = 'fiveHour';
 
     constructor() {
-        this._item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
+        this._item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
         this._item.command = 'claudePulse.showPicker';
         this._item.show();
     }
@@ -55,8 +55,8 @@ export class ClaudePulseStatusBar implements vscode.Disposable {
 
         this._item.text = text;
         this._item.backgroundColor =
-            utilization >= 0.8 ? new vscode.ThemeColor('statusBarItem.errorBackground')
-            : utilization >= 0.5 ? new vscode.ThemeColor('statusBarItem.warningBackground')
+            utilization >= 80 ? new vscode.ThemeColor('statusBarItem.errorBackground')
+            : utilization >= 50 ? new vscode.ThemeColor('statusBarItem.warningBackground')
             : undefined;
         this._item.tooltip = this._buildTooltip(data);
     }
