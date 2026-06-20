@@ -22,6 +22,6 @@ jobs:
         run: npx tsc -p ./
 
       - name: Publish to VS Code Marketplace
-        run: npx vsce publish --no-git-tag-version
+        run: npx vsce publish
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}

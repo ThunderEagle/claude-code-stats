@@ -2,7 +2,7 @@
   "name": "thundereagle-claudepulse",
   "displayName": "ClaudePulse",
   "description": "Ambient Claude Code quota visibility in the VS Code status bar",
-  "version": "0.1.2",
+  "version": "0.1.0",
   "publisher": "thundereagle",
   "engines": {
     "vscode": "^1.85.0"
