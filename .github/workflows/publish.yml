@@ -22,6 +22,6 @@ jobs:
         run: npx tsc -p ./
 
       - name: Publish to VS Code Marketplace
-        run: npx vsce publish "${GITHUB_REF#refs/tags/v}"
+        run: npx vsce publish "${GITHUB_REF#refs/tags/v}" --no-git-tag-version
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
