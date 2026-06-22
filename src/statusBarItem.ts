@@ -49,8 +49,9 @@ export class ClaudePulseStatusBar implements vscode.Disposable {
         } else if (pinned === 'extraUsage' && data.extraUsage?.isEnabled) {
             const used = data.extraUsage.usedCredits ?? 0;
             const limit = data.extraUsage.monthlyLimit ?? 0;
+            const remaining = Math.max(0, limit - used);
             utilization = data.extraUsage.utilization ?? 0;
-            text = `Claude: $${used.toFixed(2)} / $${limit.toFixed(2)}`;
+            text = `Claude: $${used.toFixed(2)} / $${limit.toFixed(2)} ($${remaining.toFixed(2)} left)`;
         }
 
         this._item.text = text;
@@ -72,9 +73,10 @@ export class ClaudePulseStatusBar implements vscode.Disposable {
             lines.push(`**7-day:** ${formatPct(data.sevenDay.utilization)} used${reset}`);
         }
         if (data.extraUsage?.isEnabled) {
-            const used = (data.extraUsage.usedCredits ?? 0).toFixed(2);
-            const limit = (data.extraUsage.monthlyLimit ?? 0).toFixed(2);
-            lines.push(`**Extra usage:** $${used} / $${limit}`);
+            const used = data.extraUsage.usedCredits ?? 0;
+            const limit = data.extraUsage.monthlyLimit ?? 0;
+            const remaining = Math.max(0, limit - used);
+            lines.push(`**Extra usage:** $${used.toFixed(2)} / $${limit.toFixed(2)} — $${remaining.toFixed(2)} remaining`);
         }
         const md = new vscode.MarkdownString(lines.join('\n\n'));
         md.isTrusted = false;

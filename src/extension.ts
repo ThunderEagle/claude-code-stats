@@ -41,11 +41,12 @@ export function activate(context: vscode.ExtensionContext): void {
             });
         }
         if (data.extraUsage?.isEnabled) {
-            const used = (data.extraUsage.usedCredits ?? 0).toFixed(2);
-            const limit = (data.extraUsage.monthlyLimit ?? 0).toFixed(2);
+            const used = data.extraUsage.usedCredits ?? 0;
+            const limit = data.extraUsage.monthlyLimit ?? 0;
+            const remaining = Math.max(0, limit - used);
             items.push({
                 label: '$(credit-card)  Extra usage',
-                description: `$${used} / $${limit}`,
+                description: `$${used.toFixed(2)} / $${limit.toFixed(2)} ($${remaining.toFixed(2)} left)`,
                 metric: 'extraUsage',
             });
         }
