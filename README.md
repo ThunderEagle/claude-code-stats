@@ -13,7 +13,13 @@ Ambient Claude Code quota visibility in the VS Code status bar. No modals, no na
 
 ## Requirements
 
-[Claude Code](https://claude.ai/code) must be installed and authenticated. ClaudePulse reads your existing credentials from `~/.claude/.credentials.json` — no separate API key or login required.
+**ClaudePulse is designed for Claude Pro and Max subscribers** using Claude Code's built-in OAuth login (`claude login` → browser flow). It tracks the rolling rate-limit windows that apply to Pro/Max plans.
+
+It will not display data in the following configurations:
+- **Amazon Bedrock** — Claude Code authenticates via AWS credentials; there are no equivalent quota windows exposed through Anthropic's API
+- **Anthropic API key** — pay-per-token plans have no quota utilization to track; rate limits are only readable from inference response headers, not a dedicated endpoint
+
+[Claude Code](https://claude.ai/code) must be installed and authenticated via `claude login`. ClaudePulse reads your existing credentials from `~/.claude/.credentials.json` — no separate API key or login required.
 
 ## Usage
 
